@@ -4,7 +4,9 @@ export interface Document {
   type: 'PDF' | 'Imagen';
   date: string;
   category: string;
-  uri?: string;
+  uri: string;
+  size?: number;
+  mimeType?: string;
 }
 
 export type RootStackParamList = {
@@ -15,3 +17,4 @@ export type RootStackParamList = {
   DocumentList: undefined;
   DocumentDetail: {document: Document};
 };
+

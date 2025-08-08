@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {View, StyleSheet, Alert, ScrollView} from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import {
   Text,
   Button,
@@ -7,6 +7,11 @@ import {
   TextInput,
   Menu,
 } from 'react-native-paper';
+import DocumentPicker from 'react-native-document-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { DocumentService } from '../services/DocumentService';
+import { Document } from '../types';
+import 'react-native-get-random-values';
 
 const AgregarDocumentoScreen = () => {
   const [documentName, setDocumentName] = useState('');
@@ -17,32 +22,72 @@ const AgregarDocumentoScreen = () => {
   const categories = ['Personal', 'Trabajo', 'Educación', 'Salud', 'Finanzas'];
 
   const pickDocument = async () => {
-    Alert.alert('Funcionalidad PDF', 'Selector de PDF en desarrollo');
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.pdf],
+      });
+      setSelectedFile(result[0]);
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        // Usuario canceló
+      } else {
+        Alert.alert('Error', 'No se pudo seleccionar el documento');
+      }
+    }
   };
 
   const pickImage = async () => {
-    Alert.alert('Funcionalidad Imagen', 'Selector de imagen en desarrollo');
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+      },
+      (response) => {
+        if (response.assets && response.assets[0]) {
+          setSelectedFile(response.assets[0]);
+        }
+      }
+    );
   };
 
-  const saveDocument = () => {
-    if (!documentName.trim()) {
-      Alert.alert('Error', 'Debe ingresar un nombre para el documento');
+  const saveDocument = async () => {
+    if (!documentName.trim() || !selectedFile) {
+      Alert.alert('Error', 'Debe ingresar un nombre y seleccionar un archivo');
       return;
     }
 
-    Alert.alert(
-      'Éxito',
-      'Documento guardado correctamente\n(Funcionalidad completa en desarrollo)',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setDocumentName('');
-            setCategory('Personal');
-          },
-        },
-      ]
-    );
+    try {
+      console.log('💾 Guardando documento:', selectedFile.name);
+      
+      // Copiar archivo al almacenamiento interno
+      const internalPath = await DocumentService.copyFileToInternalStorage(
+        selectedFile.uri,
+        selectedFile.name || 'documento'
+      );
+
+      const document: Document = {
+        id: Date.now().toString(),
+        name: documentName,
+        type: selectedFile.type?.includes('pdf') ? 'PDF' : 'Imagen',
+        date: new Date().toISOString().split('T')[0],
+        category,
+        uri: internalPath, // Usar la ruta interna en lugar de la URI temporal
+        size: selectedFile.size,
+        mimeType: selectedFile.type,
+      };
+
+      await DocumentService.saveDocument(document);
+      Alert.alert('Éxito', 'Documento guardado correctamente');
+
+      // Limpiar formulario
+      setDocumentName('');
+      setSelectedFile(null);
+      setCategory('Personal');
+
+    } catch (error) {
+      console.error('❌ Error guardando documento:', error);
+      Alert.alert('Error', `No se pudo guardar el documento: ${error}`);
+    }
   };
 
   return (
@@ -50,26 +95,31 @@ const AgregarDocumentoScreen = () => {
       <Text variant="headlineMedium" style={styles.title}>
         Agregar Documento
       </Text>
-      
+
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Seleccionar Archivo
           </Text>
+          {selectedFile && (
+            <Text variant="bodySmall" style={styles.selectedFile}>
+              ✅ Archivo seleccionado: {selectedFile.name}
+            </Text>
+          )}
           <View style={styles.buttonRow}>
+            {/* BOTONES CON EMOJIS - MÁS SIMPLE Y FUNCIONAL */}
             <Button
               mode="contained"
               onPress={pickDocument}
-              style={styles.button}
-              icon="file-pdf-box">
-              PDF
+              style={styles.button}>
+              📄 PDF
             </Button>
+            
             <Button
               mode="outlined"
               onPress={pickImage}
-              style={styles.button}
-              icon="image">
-              Imagen
+              style={styles.button}>
+              🖼️ Imagen
             </Button>
           </View>
         </Card.Content>
@@ -80,7 +130,7 @@ const AgregarDocumentoScreen = () => {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Información del Documento
           </Text>
-          
+
           <TextInput
             label="Nombre del documento"
             value={documentName}
@@ -89,6 +139,7 @@ const AgregarDocumentoScreen = () => {
             mode="outlined"
           />
 
+          {/* MENÚ DE CATEGORÍAS SIMPLE */}
           <Menu
             visible={menuVisible}
             onDismiss={() => setMenuVisible(false)}
@@ -96,9 +147,8 @@ const AgregarDocumentoScreen = () => {
               <Button
                 mode="outlined"
                 onPress={() => setMenuVisible(true)}
-                style={styles.input}
-                icon="chevron-down">
-                Categoría: {category}
+                style={styles.input}>
+                📁 Categoría: {category} ▼
               </Button>
             }>
             {categories.map(cat => (
@@ -115,12 +165,12 @@ const AgregarDocumentoScreen = () => {
         </Card.Content>
       </Card>
 
+      {/* BOTÓN GUARDAR SIMPLE */}
       <Button
         mode="contained"
         onPress={saveDocument}
-        style={styles.saveButton}
-        icon="content-save">
-        Guardar Documento
+        style={styles.saveButton}>
+        💾 Guardar Documento
       </Button>
     </ScrollView>
   );
@@ -140,6 +190,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: 16,
+  },
+  selectedFile: {
+    marginBottom: 8,
+    fontStyle: 'italic',
+    color: '#4CAF50',
   },
   buttonRow: {
     flexDirection: 'row',
