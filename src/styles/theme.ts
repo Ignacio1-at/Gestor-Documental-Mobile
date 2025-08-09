@@ -4,10 +4,14 @@ export const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#2196F3',
-    accent: '#03DAC4',
-    background: '#F5F5F5',
+    primary: '#E91E63', // Rosa corporativo como en la imagen
+    accent: '#FF4081', // Rosa más claro para acentos
+    background: '#F8F9FA', // Fondo más suave
     surface: '#FFFFFF',
-    text: '#000000',
+    text: '#2E3A59', // Azul oscuro corporativo para texto
+    onSurface: '#2E3A59',
+    onBackground: '#2E3A59',
+    secondary: '#6C7B95', // Gris azulado para texto secundario
+    outline: '#E1E8ED',
   },
 };

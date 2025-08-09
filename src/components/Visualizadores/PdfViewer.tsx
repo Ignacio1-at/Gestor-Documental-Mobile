@@ -75,13 +75,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ uri, fileName }) => {
               📄 Vista Previa PDF
             </Text>
             
-            {loading && (
-              <View style={styles.loadingContainer}>
-                <ProgressBar indeterminate />
-                <Text style={styles.loadingText}>Cargando PDF...</Text>
-              </View>
-            )}
-            
             <TouchableOpacity onPress={openFullScreen} style={styles.pdfContainer}>
               <Pdf
                 source={{ uri }}

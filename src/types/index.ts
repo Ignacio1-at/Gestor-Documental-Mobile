@@ -10,6 +10,10 @@ export interface Document {
 }
 
 export type RootStackParamList = {
+  // Auth Stack
+  Login: undefined;
+  
+  // Main App Stack
   HomeTab: undefined;
   DocumentsTab: undefined;
   AddTab: undefined;
